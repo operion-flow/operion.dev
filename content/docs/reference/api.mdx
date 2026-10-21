@@ -21,7 +21,7 @@ Errors on these routes are `application/problem+json`:
 
 | Route | Description |
 |---|---|
-| `POST /workflows` | Create a workflow for the tenant from the [workflow JSON](/docs/concepts/workflows). It is always stored as a `draft`. `201` with the workflow, `400` when `name` or `description` is missing |
+| `POST /workflows` | Create a workflow for the tenant from the [workflow JSON](/docs/concepts/workflows). It is always stored as a `draft`. `201` with the workflow, `400` when `name` or `description` is missing or `workflow_group_id` is not a UUID, `404` when `workflow_group_id` is not a group of the tenant |
 | `GET /workflows` | List the tenant's workflows |
 | `GET /workflows/:id` | Get a workflow |
 | `POST /workflows/:id/publish` | Validate the workflow and publish it. `200` with the workflow, `422` with every problem found |
