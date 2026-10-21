@@ -1,0 +1,35 @@
+---
+title: Configuration
+description: Every flag and environment variable of operion serve
+---
+
+`operion serve` takes each setting as a flag or an environment variable. A flag wins over its variable.
+
+| Flag | Environment | Default | Description |
+|---|---|---|---|
+| `--database-url` | `DATABASE_URL` | | Required. PostgreSQL connection URL |
+| `--api-token` | `OPERION_API_TOKEN` | | Required. Bearer token every API route requires. Webhooks, callbacks and health checks stay open |
+| `--port` | `PORT` | `9091` | HTTP port |
+| `--public-url` | `OPERION_PUBLIC_URL` | | Base URL remote nodes call back to, such as `http://operion:9091`. Without it, a remote node that answers `202` fails |
+| `--node-types` | `NODE_TYPES_FILE` | | JSON file of [remote node types](/docs/nodes/remote-nodes#from-a-file) keyed by id, registered on start |
+| `--log-level` | `LOG_LEVEL` | `info` | `debug`, `info`, `warn` or `error` |
+| `--poll-interval` | | `1s` | How long the worker and the scheduler wait when nothing is due, and how often the Kafka consumer checks for new topics |
+| `--kafka-brokers` | `KAFKA_BROKERS` | | Kafka brokers, comma separated. Kafka is off when empty |
+| `--kafka-group` | `KAFKA_GROUP` | `operion` | Kafka consumer group |
+| `--schema-registry-url` | `SCHEMA_REGISTRY_URL` | | Confluent Schema Registry for `avro` and `protobuf` events. They are skipped when empty |
+| `--schema-registry-username` | `SCHEMA_REGISTRY_USERNAME` | | Schema Registry basic auth username |
+| `--schema-registry-password` | `SCHEMA_REGISTRY_PASSWORD` | | Schema Registry basic auth password |
+
+Traces are exported over OTLP/HTTP when `OTEL_EXPORTER_OTLP_ENDPOINT` or `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` is set.
+
+Workflows cannot read these variables, or any other variable of the server's environment.
+
+For example:
+
+```bash
+DATABASE_URL="postgres://operion:secret@db:5432/operion?sslmode=require" \
+OPERION_API_TOKEN="$(openssl rand -hex 32)" \
+OPERION_PUBLIC_URL="http://operion:9091" \
+KAFKA_BROKERS="kafka-1:9092,kafka-2:9092" \
+operion serve
+```

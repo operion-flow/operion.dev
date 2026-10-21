@@ -1,0 +1,48 @@
+---
+title: Webhook
+description: Start a workflow with an HTTP POST to a tenant's webhook path
+---
+
+`trigger:webhook` starts a workflow when someone posts to its path.
+
+```json
+{"id": "trigger", "name": "Order created", "type": "trigger:webhook", "category": "trigger", "enabled": true, "config": {"webhook_path": "/orders/created"}}
+```
+
+| Config | Description |
+|---|---|
+| `webhook_path` | Required. The path after the tenant, starting with `/` |
+
+## Calling it
+
+The URL is `/webhooks/<tenant><webhook_path>`. For the tenant `acme`, the node above listens on:
+
+```bash
+curl -s -X POST localhost:9091/webhooks/acme/orders/created \
+  -H 'Content-Type: application/json' \
+  -d '{"order_id": "o-1", "total": 120}'
+```
+
+```json
+{"executions": ["<execution-id>"]}
+```
+
+- Only `POST` is accepted, and the body must be JSON or empty; anything else is a `400`.
+- Every published workflow of the tenant listening on the path starts its own execution, and the answer lists them all with `202`.
+- When no published workflow of the tenant listens on the path, the answer is `404`.
+
+Webhooks need no API token, so anyone who knows the URL can start the workflow. When that matters, have the caller send a shared secret in a header and check it with a [`conditional`](/docs/nodes/built-in#conditional) right after the trigger.
+
+## What the trigger sends on
+
+The `success` port carries the request:
+
+| Field | Description |
+|---|---|
+| `body` | The JSON body, parsed |
+| `headers` | The request headers; repeated headers are joined with `, ` |
+| `query` | The query string parameters |
+| `method` | Always `POST` |
+| `url` | The path and query string as received |
+
+Read them as `{{.node_results.<trigger_id>.body.order_id}}`.

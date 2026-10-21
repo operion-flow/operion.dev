@@ -1,0 +1,74 @@
+---
+title: Catalog events
+description: Let tenants start workflows from Kafka events the platform registers, routed to the right tenant
+---
+
+The event catalog is the list of business events tenants can build workflows on, such as "employee created". The platform operator registers each event once: which Kafka topic it comes from, how to decode it and where the tenant is. Tenants then start workflows with `trigger:event`, and each message only reaches the workflows of its own tenant.
+
+Catalog events need Kafka: start `serve` with `--kafka-brokers`; see [configuration](/docs/operating/configuration).
+
+## Register an event
+
+```bash
+curl -s -X PUT localhost:9091/platform/event-definitions/employee_created \
+  -H 'Authorization: Bearer dev-token' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "name": "Employee Criado",
+    "description": "A company hired someone",
+    "topic": "tp_employee_created",
+    "format": "json",
+    "tenant_from": "payload",
+    "tenant_key": "company.id"
+  }'
+```
+
+The key in the path, `employee_created`, is what workflows refer to. A `PUT` to the same key replaces the definition.
+
+| Field | Description |
+|---|---|
+| `name` | Required. The name tenants see |
+| `description` | What the event means |
+| `topic` | Required. The Kafka topic |
+| `format` | Required. `json`, `avro` or `protobuf` |
+| `tenant_from` | Required. `payload` or `header` |
+| `tenant_key` | Required. With `payload`, a dotted path in the decoded message, such as `company.id`; with `header`, the name of a Kafka header |
+| `schema` | Optional. Any JSON, such as a JSON Schema of the payload, shown to tenants in the catalog. Operion does not validate messages against it |
+
+Several events can share a topic, for example when different event types travel on one topic.
+
+`GET /catalog/events` lists the catalog with `key`, `name`, `description` and `schema` only, which is what a tenant needs to build on it.
+
+## Use it in a workflow
+
+```json
+{"id": "trigger", "name": "Employee created", "type": "trigger:event", "category": "trigger", "enabled": true, "config": {"event": "employee_created"}}
+```
+
+Publishing a workflow whose `trigger:event` names a key missing from the catalog is refused with `422`.
+
+The trigger sends on:
+
+| Field | Description |
+|---|---|
+| `event` | The event key |
+| `tenant_id` | The tenant found in the message |
+| `payload` | The decoded message |
+| `headers` | The Kafka headers |
+| `key` | The Kafka message key |
+| `topic`, `partition`, `offset`, `timestamp` | Where the message came from |
+
+So `{{.node_results.trigger.payload.employee.name}}` reads a field of the message.
+
+## Formats
+
+- `json`: the message is a JSON object.
+- `avro` and `protobuf`: the message is in the Confluent wire format (a zero byte, the 4-byte schema ID and, for protobuf, the message indexes). Operion fetches the schema by ID from `--schema-registry-url` once per process. Protobuf messages follow the protobuf JSON mapping, so 64-bit integers become strings, with the field names of the `.proto` and fields at their default value included. Schemas that reference other subjects are not supported yet.
+
+## Delivery
+
+Operion consumes only the topics that published workflows use, and notices new ones within `--poll-interval`. All replicas share the consumer group from `--kafka-group`. A new group starts at the end of each partition, so messages published before it existed are not read.
+
+A message is committed after its executions are stored. When a message is read again, it does not start a second execution, because each execution's id comes from the workflow, the trigger and the message's topic, partition and offset.
+
+A message that cannot be decoded, has no tenant, or whose schema is not in the registry is logged and skipped. Without `--schema-registry-url`, `avro` and `protobuf` events are skipped too. When the registry cannot be reached or answers with an error, the message is not committed and is read again.

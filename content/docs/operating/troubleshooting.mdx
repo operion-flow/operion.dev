@@ -1,0 +1,30 @@
+---
+title: Troubleshooting
+description: What common errors mean and where to look
+---
+
+API errors come as `application/problem+json`, with the reason in `detail`.
+
+## API
+
+| Answer | Cause |
+|---|---|
+| `401` | The `Authorization: Bearer <token>` header is missing or does not match `OPERION_API_TOKEN` |
+| `400` with `X-Tenant-Id header is required` | Workflow and execution routes need the tenant header |
+| `404` on a workflow or execution | It does not exist, or it belongs to another tenant |
+| `422` on publish | The workflow cannot run; `detail` lists every problem. See [publishing](/docs/concepts/workflows#publishing) |
+| `409` on resume | The node is not waiting, or it was already resumed |
+
+## Workflows that do not start
+
+- **Webhook answers `404`.** No published workflow of that tenant listens on the path. Check that the workflow is published, that the tenant in the URL is the workflow's tenant, and that the path after the tenant equals `webhook_path`, leading `/` included.
+- **Catalog event does nothing.** Check that `serve` has `--kafka-brokers`, that a published workflow uses the event, and the logs for `event skipped`: the message could not be decoded, had no tenant at `tenant_key`, or is `avro` or `protobuf` without `--schema-registry-url`. A new consumer group starts at the end of the topic, so earlier messages are not read.
+- **Schedule does not fire.** Only published workflows fire, and times follow the node's `timezone`, which defaults to UTC.
+
+## Executions
+
+- **The execution is `failed`.** `error_message` names the node and the reason, and that node's entry in `node_results` has the details. Connect the node's `error` port to handle the failure instead.
+- **A template renders `<no value>`.** The path does not exist in the data; compare it with `node_results` in the execution. See [templates](/docs/concepts/templates).
+- **A remote node fails with `remote node answered 202 but serve has no --public-url`.** Set [`OPERION_PUBLIC_URL`](/docs/operating/configuration) to an address the service can reach.
+- **A remote node fails with `remote node did not call back before its deadline`.** The service did not post to `callback_url` before `answer_by`.
+- **The execution stays `running`.** A node is `waiting` or `retrying`; its entry in `node_results` says until when.

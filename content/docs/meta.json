@@ -3,10 +3,10 @@
   "pages": [
     "index",
     "getting-started",
+    "concepts",
     "triggers",
-    "visual-editor",
-    "reference",
-    "configuration", 
-    "troubleshooting"
+    "nodes",
+    "operating",
+    "reference"
   ]
 }

@@ -1,0 +1,30 @@
+---
+title: Kafka topic
+description: Start a workflow from every message on a Kafka topic, for the platform's own workflows
+---
+
+`trigger:kafka` starts a workflow for every message on a topic.
+
+```json
+{"id": "trigger", "name": "Audit log", "type": "trigger:kafka", "category": "trigger", "enabled": true, "config": {"topic": "tp_audit"}}
+```
+
+| Config | Description |
+|---|---|
+| `topic` | Required. The Kafka topic |
+
+<Callout type="warn">
+`trigger:kafka` ignores tenants: a message starts every published workflow listening on the topic, whoever owns it. Use it for the platform's own workflows, and give tenants [catalog events](/docs/triggers/catalog-events), which route each message to its tenant.
+</Callout>
+
+It needs `serve` with `--kafka-brokers`, and it is consumed and delivered like catalog events: see [delivery](/docs/triggers/catalog-events#delivery).
+
+## What the trigger sends on
+
+| Field | Description |
+|---|---|
+| `message` | The message value parsed as JSON, or `{"raw_message": "<text>"}` when it is not JSON |
+| `key` | The message key |
+| `headers` | The Kafka headers |
+| `topic`, `partition`, `offset`, `timestamp` | Where the message came from |
+| `config` | The node's config |

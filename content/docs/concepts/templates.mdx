@@ -1,0 +1,74 @@
+---
+title: Templates
+description: Read earlier results, the event and workflow variables in node configs with Go templates
+---
+
+Node configs are [Go templates](https://pkg.go.dev/text/template). A template reads what the execution knows so far:
+
+| Expression | What it reads |
+|---|---|
+| `{{.node_results.<node_id>.<field>}}` | The data an earlier node sent on |
+| `{{.trigger_data.<field>}}` | The event that started the execution |
+| `{{.variables.<name>}}` | The workflow's `variables` |
+| `{{.execution.id}}`, `{{.execution.workflow_id}}` | The current execution and workflow |
+
+Templates cannot read the server's environment variables. A value a workflow needs, such as an API key, goes in `variables` or comes from the event.
+
+These config fields are templates:
+
+| Node | Fields |
+|---|---|
+| `httprequest` | `url`, `body` and each header value |
+| `transform` | `expression` |
+| `log` | `message` |
+| `conditional` | `condition` |
+| `switch` | `value` |
+| `wait_until` | `until` |
+| Remote nodes | Every string in `config`, at any depth |
+
+Trigger configs are not templates.
+
+## Examples
+
+Build a JSON body from the webhook request:
+
+```json
+{"body": "{\"name\": \"{{.node_results.trigger.body.name}}\", \"execution\": \"{{.execution.id}}\"}"}
+```
+
+Branch on a value:
+
+```json
+{"condition": "{{gt .node_results.trigger.body.amount 500.0}}"}
+```
+
+Read a node whose id has a dash, which the dot syntax cannot parse:
+
+```json
+{"expression": "{{index .node_results \"fetch-user\" \"json\" \"email\"}}"}
+```
+
+Wait until an RFC 3339 time that comes in the event:
+
+```json
+{"until": "{{.node_results.trigger.payload.start_date}}"}
+```
+
+## Functions
+
+Besides Go's built-in functions (`eq`, `ne`, `lt`, `le`, `gt`, `ge`, `and`, `or`, `not`, `len`, `index`, `printf`, `urlquery` and the rest), templates have:
+
+- `now`: the current time in UTC, as RFC 3339;
+- `rand n`: a random integer below `n`.
+
+## What a template returns
+
+After rendering, Operion trims the text and reads its type:
+
+- text that starts and ends with `{}` or `[]` is parsed as JSON, and a template that renders invalid JSON fails;
+- a number becomes a number, and `true` or `false` a boolean;
+- anything else stays a string.
+
+So a `transform` with `{"total": {{.node_results.cart.json.total}}}` sends on an object, not a string.
+
+JSON numbers are floating point, so compare them with floating point literals such as `500.0`. A field that does not exist renders as `<no value>` instead of failing, so check the spelling of paths when a result looks wrong.

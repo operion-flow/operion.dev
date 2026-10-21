@@ -1,6 +1,8 @@
 # Operion Documentation
 
-Official documentation site for Operion, a powerful workflow automation platform for event-driven applications. Built with [Fumadocs](https://fumadocs.dev) and Next.js.
+Official documentation site for [Operion](https://github.com/operion-flow/operion), event-driven workflows for many tenants in one binary on PostgreSQL. Built with [Fumadocs](https://fumadocs.dev) and Next.js.
+
+The docs follow operion's `main`: a change to operion that users can see ships with a pull request here.
 
 Run development server:
 
@@ -26,12 +28,12 @@ Open http://localhost:3000 with your browser to see the result.
 
 | Section | Description |
 | ------- | ----------- |
-| **Getting Started** | Installation guides and first workflow tutorial |
-| **Triggers** | Kafka, Queue, and custom trigger configuration |
-| **Visual Editor** | Interactive workflow design interface |
-| **API Reference** | Complete REST API documentation |
-| **Configuration** | Environment variables and deployment guides |
-| **Troubleshooting** | Common issues and solutions |
+| **Getting Started** | Run the image with Compose, publish a first workflow, run a workflow file locally |
+| **Concepts** | Workflows, executions, templates and tenants |
+| **Triggers** | Webhook, scheduler, catalog events and Kafka topics |
+| **Nodes** | Built-in nodes and remote nodes over HTTP |
+| **Operating** | Deployment, configuration and troubleshooting |
+| **Reference** | HTTP API and CLI |
 
 ## Project Structure
 
@@ -40,7 +42,6 @@ Open http://localhost:3000 with your browser to see the result.
 | `app/(home)/` | Landing page and marketing content |
 | `app/docs/` | Documentation layout and pages |
 | `content/docs/` | MDX documentation content |
-| `content/docs/triggers/` | Trigger-specific documentation |
 | `lib/source.ts` | Content source adapter for Fumadocs |
 
 ### Fumadocs MDX

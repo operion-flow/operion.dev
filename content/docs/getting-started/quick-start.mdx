@@ -1,0 +1,117 @@
+---
+title: Quick start
+description: Run Operion and PostgreSQL with Docker Compose, publish a workflow and start it through a webhook
+---
+
+This guide runs Operion next to PostgreSQL, creates a workflow for the tenant `acme`, publishes it and starts it with a webhook call.
+
+## Run Operion
+
+Save this as `compose.yaml`:
+
+```yaml title="compose.yaml"
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: operion
+      POSTGRES_PASSWORD: operion
+      POSTGRES_DB: operion
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U operion -d operion"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  operion:
+    image: ghcr.io/operion-flow/operion:0.1
+    environment:
+      DATABASE_URL: postgres://operion:operion@postgres:5432/operion?sslmode=disable
+      OPERION_API_TOKEN: dev-token
+    ports:
+      - "9091:9091"
+    depends_on:
+      postgres:
+        condition: service_healthy
+```
+
+Start both:
+
+```bash
+docker compose up
+```
+
+The image runs `operion serve`, which applies its database migrations on start and listens on port 9091. Every API call needs the token from `OPERION_API_TOKEN` as a bearer token.
+
+## Create a workflow
+
+This workflow starts when someone posts to the webhook path `/greet` and builds a greeting from the request body. Save it as `workflow.json`:
+
+```json title="workflow.json"
+{
+  "name": "greet",
+  "description": "Greets whoever calls the webhook",
+  "nodes": [
+    {"id": "trigger", "name": "trigger", "type": "trigger:webhook", "category": "trigger", "enabled": true, "config": {"webhook_path": "/greet"}},
+    {"id": "greet", "name": "greet", "type": "transform", "category": "action", "enabled": true, "config": {"expression": "hello {{.node_results.trigger.body.name}}"}}
+  ],
+  "connections": [
+    {"id": "c1", "source_port": "trigger:success", "target_port": "greet:main"}
+  ]
+}
+```
+
+Create it as a draft for the tenant `acme`:
+
+```bash
+curl -s -X POST localhost:9091/workflows \
+  -H 'Authorization: Bearer dev-token' \
+  -H 'X-Tenant-Id: acme' \
+  -H 'Content-Type: application/json' \
+  -d @workflow.json
+```
+
+The answer is the stored workflow with its new `id` and `"status": "draft"`.
+
+## Publish it
+
+Publishing validates the graph and makes the workflow live. Replace `<workflow-id>` with the id from the previous answer:
+
+```bash
+curl -s -X POST localhost:9091/workflows/<workflow-id>/publish \
+  -H 'Authorization: Bearer dev-token' \
+  -H 'X-Tenant-Id: acme'
+```
+
+A graph Operion cannot run is refused with a `422` that lists every problem found.
+
+## Start it
+
+Webhooks need no token. The path carries the tenant:
+
+```bash
+curl -s -X POST localhost:9091/webhooks/acme/greet \
+  -H 'Content-Type: application/json' \
+  -d '{"name": "Ana"}'
+```
+
+```json
+{"executions": ["<execution-id>"]}
+```
+
+Read the execution:
+
+```bash
+curl -s localhost:9091/executions/<execution-id> \
+  -H 'Authorization: Bearer dev-token' \
+  -H 'X-Tenant-Id: acme'
+```
+
+It has `"status": "completed"`, and `node_results.greet.data.result` is `"hello Ana"`.
+
+## Next steps
+
+- [Run a workflow locally](/docs/getting-started/run-locally) without a database while you write it.
+- Learn how [workflows](/docs/concepts/workflows) and [templates](/docs/concepts/templates) fit together.
+- Start workflows from [catalog events](/docs/triggers/catalog-events) on Kafka or on a [schedule](/docs/triggers/scheduler).
+- Add your own node types as [remote nodes](/docs/nodes/remote-nodes).
