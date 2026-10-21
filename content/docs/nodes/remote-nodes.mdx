@@ -128,7 +128,7 @@ The body is the same `port` and `data` as an answer now. The callback answers:
 | `404` | The URL does not match a node waiting for an answer |
 | `409` | The node was already answered or its deadline passed |
 
-The URL carries a single-use token, so the service needs no Operion credentials, and the first answer wins. When no answer arrives by the deadline, the node takes the `error` port. A [retry policy](/docs/concepts/executions#retries) covers the call itself, not an error that arrives through the callback.
+The URL carries a single-use token, so the service needs no Operion credentials, and the first answer wins. When no answer arrives by the deadline, the node takes the `error` port. An operator can also answer for the service with the API's [resume](/docs/concepts/executions#waits) and the same `port` and `data` body. A [retry policy](/docs/concepts/executions#retries) covers the call itself, not an error that arrives through the callback.
 
 `serve` only sends `callback_url` when it has [`--public-url`](/docs/operating/configuration), the address the service reaches Operion at. Without it, and in `operion run`, a `202` fails the node at once.
 

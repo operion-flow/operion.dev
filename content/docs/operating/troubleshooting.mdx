@@ -13,6 +13,7 @@ API errors come as `application/problem+json`, with the reason in `detail`.
 | `400` with `X-Tenant-Id header is required` | Workflow and execution routes need the tenant header |
 | `404` on a workflow or execution | It does not exist, or it belongs to another tenant |
 | `422` on publish | The workflow cannot run; `detail` lists every problem. See [publishing](/docs/concepts/workflows#publishing) |
+| `400` on resume | The node is a remote node waiting for its callback, and the body has no `port`; send the answer, `{"port": "<output>", "data": {...}}` |
 | `409` on resume | The node is not waiting, or it was already resumed |
 
 ## Workflows that do not start
