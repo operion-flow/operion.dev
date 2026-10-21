@@ -1,0 +1,77 @@
+---
+title: Workflows
+description: Nodes, ports and connections, how publishing validates a workflow, and how versions work
+---
+
+A workflow is a JSON document with nodes and the connections between their ports.
+
+```json
+{
+  "name": "greet",
+  "description": "Greets whoever calls the webhook",
+  "variables": {"greeting": "hello"},
+  "nodes": [
+    {"id": "trigger", "name": "trigger", "type": "trigger:webhook", "category": "trigger", "enabled": true, "config": {"webhook_path": "/greet"}},
+    {"id": "greet", "name": "greet", "type": "transform", "category": "action", "enabled": true, "config": {"expression": "{{.variables.greeting}} {{.node_results.trigger.body.name}}"}}
+  ],
+  "connections": [
+    {"id": "c1", "source_port": "trigger:success", "target_port": "greet:main"}
+  ]
+}
+```
+
+| Field | Description |
+|---|---|
+| `name` | Required, at least 3 characters |
+| `description` | Required |
+| `nodes` | The node instances |
+| `connections` | Which output port feeds which input port |
+| `variables` | Values the nodes read in templates as `{{.variables.<name>}}` |
+| `metadata` | Free-form data stored with the workflow |
+| `workflow_group_id` | Links versions of the same workflow; see [versions](#versions) |
+
+Operion sets `id`, `status`, `tenant_id` and the timestamps itself.
+
+## Nodes
+
+| Field | Description |
+|---|---|
+| `id` | Unique within the workflow; ports and templates refer to it |
+| `name` | Required display name |
+| `type` | A [built-in node type](/docs/nodes/built-in), a [trigger](/docs/triggers/webhook) or a [remote node type](/docs/nodes/remote-nodes) |
+| `category` | `trigger` for triggers, `action` for everything else |
+| `config` | The node type's settings. String values are [templates](/docs/concepts/templates) |
+| `enabled` | Publishing needs at least one trigger with `"enabled": true` |
+| `retry` | Optional [retry policy](/docs/concepts/executions#retries) for actions |
+| `position_x`, `position_y` | Where an editor draws the node; Operion ignores them |
+
+## Ports and connections
+
+Every node has input ports and output ports, and a port is addressed as `<node_id>:<port>`.
+
+- A trigger has one input, `external`, which receives the event that starts the execution, and sends it on through `success`.
+- An action has one input, `main`, and output ports that depend on its type: `success`, `true` and `false` for a `conditional`, the case ports of a `switch`, or the `outputs` of a remote node type.
+- A connection links an output port to an input port. An output port can feed several nodes, and they all run.
+
+Most actions also have an `error` port. A node that fails sends its data through it, with the reason in an `error` field, so you can connect it to a fallback. When nothing is connected to `error`, the failure fails the whole execution.
+
+## Publishing
+
+A workflow is created as a `draft` and does nothing until it is published. Publishing validates the whole workflow and refuses it with a `422` listing every problem found:
+
+- every node type exists and its config is valid;
+- every `retry` policy is valid;
+- every connection joins an existing output port to an existing input port;
+- there is no cycle, and every node is reachable from a trigger;
+- at least one trigger is enabled;
+- every `trigger:event` names an event in the [catalog](/docs/triggers/catalog-events).
+
+Once published, the workflow's triggers are live: its webhook answers, its schedule fires and its Kafka topics are consumed.
+
+## Versions
+
+A workflow's status is `draft`, `published` or `unpublished`. Workflows that share a `workflow_group_id` are versions of one another, and only one of them is published at a time.
+
+To change a published workflow, create a new draft with the same `workflow_group_id` as the published one and publish it. The previous version becomes `unpublished` in the same transaction. A new workflow without `workflow_group_id` starts its own group.
+
+There is no endpoint to edit or delete a workflow in place yet.

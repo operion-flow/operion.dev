@@ -1,0 +1,9 @@
+{
+  "title": "Triggers",
+  "pages": [
+    "webhook",
+    "scheduler",
+    "catalog-events",
+    "kafka"
+  ]
+}

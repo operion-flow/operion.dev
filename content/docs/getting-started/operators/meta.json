@@ -1,9 +1,0 @@
-{
-  "title": "For Operators",
-  "pages": [
-    "installation",
-    "docker-deployment", 
-    "kubernetes-deployment",
-    "production-setup"
-  ]
-}

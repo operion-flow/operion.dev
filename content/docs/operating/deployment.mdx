@@ -1,0 +1,57 @@
+---
+title: Deployment
+description: Run the Operion image next to PostgreSQL in your own infrastructure
+---
+
+Operion is one container and one PostgreSQL database. Remote node types, if you have them, are containers of their own that Operion reaches over HTTP.
+
+## The image
+
+```bash
+docker pull ghcr.io/operion-flow/operion:0.1
+```
+
+Images are published for `linux/amd64` from each release tag, as `ghcr.io/operion-flow/operion:<version>` (such as `0.1.0`), `:<major>.<minor>` (such as `0.1`, which follows patch releases) and `:latest`.
+
+The image's entrypoint is the `operion` binary and its default command is `serve`, so `docker run ghcr.io/operion-flow/operion:0.1` starts the server and any other arguments replace `serve`.
+
+The image is built on distroless static: it has CA certificates and time zone data but no shell, and it runs as a non-root user (uid 65532). Files you mount, such as a [node types file](/docs/nodes/remote-nodes#from-a-file), must be readable by that user. Release `0.1.0` predates this and is built on Debian slim, running as root.
+
+## PostgreSQL
+
+`serve` needs `DATABASE_URL` and applies its migrations on start, so a new database needs no setup beyond a user that can create tables. Operion is tested against PostgreSQL 16.
+
+PostgreSQL holds everything: workflows, executions, schedules, pending steps, the event catalog and the remote node types. Back it up like any production database.
+
+## Running several replicas
+
+Run as many replicas as you need against the same database. The worker and the scheduler claim rows with `FOR UPDATE SKIP LOCKED`, so each step and each schedule firing runs once, and Kafka partitions are split across the consumer group. Any replica can take webhooks, callbacks and API calls, so put them behind one load balancer.
+
+## Settings that matter in production
+
+- **`OPERION_API_TOKEN`**: a long random value. Whoever holds it can act for every tenant; see [tenants](/docs/concepts/tenants).
+- **`OPERION_PUBLIC_URL`**: the address remote node services reach Operion at, such as `http://operion:9091` inside a cluster. Without it, remote nodes cannot [answer later](/docs/nodes/remote-nodes#answer-later).
+- **`KAFKA_BROKERS`**: only when workflows use [catalog events](/docs/triggers/catalog-events) or [Kafka topics](/docs/triggers/kafka).
+
+Every setting is listed in [configuration](/docs/operating/configuration).
+
+## Exposing it
+
+`serve` listens on one port, 9091 by default, for everything:
+
+| Paths | Who calls them | Authentication |
+|---|---|---|
+| `/workflows`, `/executions`, `/catalog`, `/platform` | Your backend | Bearer token |
+| `/webhooks/<tenant>/...` | Systems that start workflows | None |
+| `/callbacks/...` | Remote node services | The single-use URL |
+| `/livez`, `/readyz` | Your orchestrator | None |
+
+Only the webhooks, and the callbacks when remote node services live elsewhere, need to be reachable from outside your network.
+
+## Health, logs and traces
+
+- `GET /livez` and `GET /readyz` answer `200` while the process serves HTTP. They do not check the database.
+- Logs go to stderr as text lines, at the level from `LOG_LEVEL`.
+- Traces are exported over OTLP/HTTP when `OTEL_EXPORTER_OTLP_ENDPOINT` or `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` is set; the other standard `OTEL_*` variables apply.
+
+On `SIGTERM`, `serve` stops taking requests and lets its background loops finish before it exits. A step interrupted anyway runs again on the next start, so the services your nodes call should accept a repeated request.

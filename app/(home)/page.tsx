@@ -8,8 +8,8 @@ export default function HomePage() {
           Operion
         </h1>
         <p className="mb-8 text-xl text-fd-muted-foreground max-w-2xl mx-auto">
-          A powerful workflow automation platform that helps you build, deploy, and manage
-          event-driven workflows with ease.
+          Event-driven workflows for every company on your platform, in one binary on
+          PostgreSQL.
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
@@ -29,21 +29,21 @@ export default function HomePage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
           <div className="p-6 rounded-lg border border-fd-border bg-fd-card">
-            <h3 className="text-lg font-semibold mb-2">Event-Driven</h3>
+            <h3 className="text-lg font-semibold mb-2">Catalog events</h3>
             <p className="text-fd-muted-foreground">
-              Trigger workflows from Kafka, queues, and other event sources with built-in reliability.
+              Register your Kafka events once and let each tenant build workflows on them, from webhooks and schedules too.
             </p>
           </div>
           <div className="p-6 rounded-lg border border-fd-border bg-fd-card">
-            <h3 className="text-lg font-semibold mb-2">Visual Editor</h3>
+            <h3 className="text-lg font-semibold mb-2">Your own nodes</h3>
             <p className="text-fd-muted-foreground">
-              Design workflows visually with our intuitive drag-and-drop interface.
+              Add node types as HTTP services in any language, with signed calls and answers that can come days later.
             </p>
           </div>
           <div className="p-6 rounded-lg border border-fd-border bg-fd-card">
-            <h3 className="text-lg font-semibold mb-2">Production Ready</h3>
+            <h3 className="text-lg font-semibold mb-2">One binary, one database</h3>
             <p className="text-fd-muted-foreground">
-              Deploy with Docker or Kubernetes with built-in monitoring and observability.
+              Run a single container next to PostgreSQL, with waits and retries that survive restarts.
             </p>
           </div>
         </div>

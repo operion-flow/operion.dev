@@ -1,0 +1,62 @@
+---
+title: HTTP API
+description: Every route operion serve answers, with authentication, tenant and status codes
+---
+
+All routes are served by `operion serve` on one port, 9091 by default.
+
+## Authentication and tenant
+
+Every route under [Workflows](#workflows), [Executions](#executions), [Catalog](#catalog) and [Platform](#platform) needs `Authorization: Bearer <token>`, with the token given to `serve` as `OPERION_API_TOKEN`. Without it the answer is `401` with `WWW-Authenticate: Bearer`.
+
+Workflow and execution routes also need `X-Tenant-Id`. Without it the answer is `400`, and a workflow or execution of another tenant answers `404`. See [tenants](/docs/concepts/tenants).
+
+Errors on these routes are `application/problem+json`:
+
+```json
+{"type": "about:blank", "title": "Not Found", "status": 404, "detail": "workflow not found", "instance": "/workflows/0f9a..."}
+```
+
+## Workflows
+
+| Route | Description |
+|---|---|
+| `POST /workflows` | Create a workflow for the tenant from the [workflow JSON](/docs/concepts/workflows). It is always stored as a `draft`. `201` with the workflow, `400` when `name` or `description` is missing |
+| `GET /workflows` | List the tenant's workflows |
+| `GET /workflows/:id` | Get a workflow |
+| `POST /workflows/:id/publish` | Validate the workflow and publish it. `200` with the workflow, `422` with every problem found |
+| `GET /workflows/:id/executions` | List the workflow's executions, newest first. `?limit=` from 1 to 500, default 50 |
+
+## Executions
+
+| Route | Description |
+|---|---|
+| `GET /executions/:id` | Get an [execution](/docs/concepts/executions) with its status and node results |
+| `POST /executions/:id/nodes/:node_id/resume` | Continue a waiting node now. A JSON object in the body becomes the node's data; without a body the node sends on what it held. `202`, or `409` when the node is not waiting or was already resumed |
+
+## Catalog
+
+| Route | Description |
+|---|---|
+| `GET /catalog/events` | List the [catalog events](/docs/triggers/catalog-events) with `key`, `name`, `description` and `schema` |
+
+## Platform
+
+These routes manage what all tenants share and take no tenant header.
+
+| Route | Description |
+|---|---|
+| `PUT /platform/event-definitions/:key` | Register or replace an [event definition](/docs/triggers/catalog-events#register-an-event). `400` when a required field is missing or invalid |
+| `GET /platform/event-definitions/:key` | Get an event definition |
+| `PUT /platform/node-types/:id` | Register or replace a [remote node type](/docs/nodes/remote-nodes#register-a-node-type). The answer leaves out `secret` |
+| `GET /platform/node-types/:id` | Get a remote node type, without `secret` |
+
+## Open routes
+
+These need no token.
+
+| Route | Description |
+|---|---|
+| `POST /webhooks/:tenant/*` | Start the tenant's published workflows whose [webhook trigger](/docs/triggers/webhook) listens on the rest of the path. `202` with `{"executions": [...]}`, `404` when none listens, `400` when the body is not JSON |
+| `POST /callbacks/:execution_id/:node_id/:token` | The `callback_url` a [remote node](/docs/nodes/remote-nodes#answer-later) answers through. `202`, `400`, `404` or `409` |
+| `GET /livez`, `GET /readyz` | Health checks, `200` while the process serves HTTP |

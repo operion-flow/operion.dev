@@ -1,0 +1,182 @@
+---
+title: Remote nodes
+description: Add node types as HTTP services in any language, with signed calls and answers that can come later
+---
+
+A remote node type is an HTTP service that Operion calls when a workflow reaches the node. It can be written in any language and deployed as its own container next to Operion. The platform registers it once with a URL, and from then on every tenant's workflows can use it like a built-in node.
+
+[`examples/benefits`](https://github.com/operion-flow/operion/tree/main/examples/benefits) is a complete one in Go with no dependencies, a Dockerfile and a Compose file that runs it with Operion. Operion's own tests run it against the real client, so it always matches this contract.
+
+## Register a node type
+
+```bash
+curl -s -X PUT localhost:9091/platform/node-types/grant_benefit \
+  -H 'Authorization: Bearer dev-token' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "name": "Conceder benefício",
+    "description": "Approves up to 500 at once and answers larger amounts after a review",
+    "url": "http://benefits:8080",
+    "secret": "change-me-to-a-long-random-secret",
+    "outputs": ["approved", "rejected"],
+    "timeout_seconds": 10,
+    "schema": {"required": ["amount"]}
+  }'
+```
+
+The id in the path, `grant_benefit`, is the node type workflows use. A `PUT` to the same id replaces it.
+
+| Field | Description |
+|---|---|
+| `name` | Required. The name people see |
+| `description` | What the node does |
+| `url` | Required. Where Operion sends `POST` requests |
+| `secret` | At least 16 characters. When set, every call is [signed](#verify-the-signature). The API stores it and never returns it |
+| `outputs` | The output ports the service can answer with. Defaults to `["success"]`, and `error` is always added |
+| `timeout_seconds` | How long a call may take, up to 300. Defaults to 30 |
+| `schema` | `schema.required` lists the config fields a workflow must set; publishing refuses a node without them |
+
+`GET /platform/node-types/:id` returns the type without its secret. A built-in node type with the same id wins over a remote one. Workflows look the type up each time the node runs, so a change applies from the next call.
+
+### From a file
+
+Node types can also live in a JSON file keyed by id, each entry with the same body as the `PUT`:
+
+```json title="node-types.json"
+{
+  "grant_benefit": {
+    "name": "Conceder benefício",
+    "url": "http://benefits:8080",
+    "secret": "change-me-to-a-long-random-secret",
+    "outputs": ["approved", "rejected"],
+    "schema": {"required": ["amount"]}
+  }
+}
+```
+
+`operion serve --node-types node-types.json`, or `NODE_TYPES_FILE`, registers every entry on start and replaces a stored type with the same id. It refuses to start when an entry is invalid. Removing an entry from the file does not remove the type from the database.
+
+`operion run --node-types node-types.json` resolves remote nodes from the file without a database, so you can try a workflow against a service running on your machine.
+
+## Use it in a workflow
+
+```json
+{"id": "benefit", "name": "Grant benefit", "type": "grant_benefit", "category": "action", "enabled": true, "config": {"amount": "{{.node_results.trigger.body.amount}}"}}
+```
+
+The node has the input port `main` and the type's `outputs`, so this one connects as `benefit:approved`, `benefit:rejected` and `benefit:error`. Every string in `config` is a [template](/docs/concepts/templates), at any depth.
+
+## The call
+
+When the node runs, Operion sends `POST <url>` with `Content-Type: application/json`:
+
+```json
+{
+  "execution_id": "6c1d...",
+  "workflow_id": "0f9a...",
+  "node_id": "benefit",
+  "config": {"amount": 1000},
+  "input": {"body": {"amount": 1000}},
+  "trigger_data": {"body": {"amount": 1000}},
+  "node_results": {"trigger": {"body": {"amount": 1000}}},
+  "variables": {},
+  "callback_url": "http://operion:9091/callbacks/6c1d.../benefit/<token>"
+}
+```
+
+| Field | Description |
+|---|---|
+| `config` | The node's config, already rendered |
+| `input` | What the previous node sent on |
+| `trigger_data`, `node_results`, `variables` | The same data templates read |
+| `callback_url` | Where to answer later; only present when `serve` has `--public-url` |
+
+## Answer now
+
+Answer with a 2xx status and the port to follow:
+
+```json
+{"port": "approved", "data": {"benefit_id": "b-1"}}
+```
+
+`data` becomes the node's result, which later nodes read as `{{.node_results.benefit.benefit_id}}`. Answering `"port": "error"` takes the `error` port with your own data.
+
+A status outside 2xx, a timeout, a body that is not JSON or a port outside `outputs` goes to the `error` port with the reason in `error`. Operion reads at most 1 MiB of the answer.
+
+## Answer later
+
+When the work takes longer than a call, such as an approval or a provisioning queue, answer `202 Accepted` right away. The body can be empty, or set how long Operion waits:
+
+```json
+{"timeout_seconds": 259200}
+```
+
+The default is 24 hours, and the most is a year. Operion holds the node with status `waiting` and an `answer_by` time, the execution stays `running`, and the branch continues when the service posts its answer to the `callback_url` it received:
+
+```bash
+curl -s -X POST "$CALLBACK_URL" \
+  -H 'Content-Type: application/json' \
+  -d '{"port": "approved", "data": {"benefit_id": "b-1"}}'
+```
+
+The body is the same `port` and `data` as an answer now. The callback answers:
+
+| Status | When |
+|---|---|
+| `202` | The answer was taken |
+| `400` | The body is not `{"port": ..., "data": ...}` |
+| `404` | The URL does not match a node waiting for an answer |
+| `409` | The node was already answered or its deadline passed |
+
+The URL carries a single-use token, so the service needs no Operion credentials, and the first answer wins. When no answer arrives by the deadline, the node takes the `error` port. A [retry policy](/docs/concepts/executions#retries) covers the call itself, not an error that arrives through the callback.
+
+`serve` only sends `callback_url` when it has [`--public-url`](/docs/operating/configuration), the address the service reaches Operion at. Without it, and in `operion run`, a `202` fails the node at once.
+
+## Verify the signature
+
+With a `secret`, every call carries two headers:
+
+- `X-Operion-Timestamp`: the time of the call, in Unix seconds;
+- `X-Operion-Signature`: `sha256=` followed by the hex HMAC-SHA256 of `<timestamp>.<raw body>`, keyed with the secret.
+
+The service recomputes the signature over the raw body, compares it in constant time and refuses old timestamps.
+
+Go:
+
+```go
+func verified(secret string, r *http.Request, body []byte) bool {
+	timestamp := r.Header.Get("X-Operion-Timestamp")
+
+	sent, err := strconv.ParseInt(timestamp, 10, 64)
+	if err != nil || time.Since(time.Unix(sent, 0)).Abs() > 5*time.Minute {
+		return false
+	}
+
+	mac := hmac.New(sha256.New, []byte(secret))
+	mac.Write([]byte(timestamp + "."))
+	mac.Write(body)
+
+	return hmac.Equal([]byte(r.Header.Get("X-Operion-Signature")), []byte("sha256="+hex.EncodeToString(mac.Sum(nil))))
+}
+```
+
+Python:
+
+```python
+import hashlib
+import hmac
+import time
+
+
+def verified(secret: str, timestamp: str, signature: str, body: bytes) -> bool:
+    try:
+        sent = int(timestamp)
+    except ValueError:
+        return False
+    if abs(time.time() - sent) > 300:
+        return False
+    mac = hmac.new(secret.encode(), timestamp.encode() + b"." + body, hashlib.sha256)
+    return hmac.compare_digest("sha256=" + mac.hexdigest(), signature)
+```
+
+The callback is not signed: its single-use URL is the credential.

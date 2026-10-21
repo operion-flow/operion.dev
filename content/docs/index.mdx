@@ -1,42 +1,24 @@
 ---
-title: Welcome to Operion
-description: A powerful workflow automation platform for event-driven applications
+title: Operion
+description: Event-driven workflows for many tenants, in one binary on PostgreSQL
 ---
 
-Welcome to Operion documentation! Operion is a comprehensive workflow automation platform that enables you to build, deploy, and manage event-driven workflows with ease.
+Operion runs workflows. A workflow is a graph of nodes: a trigger starts an execution, and each node's output port decides which nodes run next. A node can call an HTTP API, transform data, branch, wait for days, or hand the work to a service of your own.
 
-## What is Operion?
+It is built for a platform that serves many companies. The platform registers the events its systems publish, such as "employee created", in an event catalog, and each company (a tenant) builds its own workflows on those events. A tenant only ever sees and starts its own workflows.
 
-Operion provides a complete solution for workflow automation, offering:
+## How it runs
 
-- **Event-Driven Architecture**: React to events from Kafka, message queues, and other sources
-- **Visual Workflow Viewer**: View and understand workflow structures using an interactive node-based interface
-- **Production-Ready Deployment**: Deploy with Docker or Kubernetes with built-in observability
-- **Flexible Triggers**: Support for various trigger types including Kafka, queues, and custom triggers
+- **One binary.** `operion serve` runs the HTTP API, the webhooks, the scheduler, the Kafka consumer and the worker in one process.
+- **PostgreSQL is the only state.** Workflows, executions, schedules and pending work live in Postgres. Waits and retries are rows in a `jobs` table, so an execution survives a restart and several replicas can share the work.
+- **Kafka only at the edge.** When you give it brokers, Operion consumes the topics that published workflows listen on. Nothing inside Operion depends on Kafka.
+- **Your own node types over HTTP.** A node type can be a service in any language, registered with a URL. Operion signs every call, and the service can answer later through a callback.
 
-## Getting Started
+Operion ships as a container image, `ghcr.io/operion-flow/operion`, that you run in your own infrastructure next to PostgreSQL.
 
 <Cards>
-  <Card title="Installation" href="/docs/getting-started/operators/installation" />
-  <Card title="First Workflow" href="/docs/getting-started/developers/first-workflow" />
-  <Card title="Visual Workflow Viewer" href="/docs/visual-editor" />
-  <Card title="API Reference" href="/docs/reference/api" />
+  <Card title="Quick start" href="/docs/getting-started/quick-start" description="Run Operion with Docker Compose and start a first workflow" />
+  <Card title="Run a workflow locally" href="/docs/getting-started/run-locally" description="Try a workflow file in memory, with no database" />
+  <Card title="Workflows" href="/docs/concepts/workflows" description="Nodes, ports, connections and publishing" />
+  <Card title="Remote nodes" href="/docs/nodes/remote-nodes" description="Add node types as HTTP services" />
 </Cards>
-
-## Core Concepts
-
-### Triggers
-Triggers are the entry points for your workflows. Operion supports various trigger types:
-
-- [Kafka Trigger](/docs/triggers/kafka-trigger) - React to Kafka messages
-- [Queue Trigger](/docs/triggers/queue-trigger) - Process messages from queues
-- [Custom Triggers](/docs/triggers/trigger-service) - Build your own trigger types
-
-### Workflows
-Workflows define the business logic and processing steps for your automation. Use the [Visual Workflow Viewer](/docs/visual-editor) to view and understand existing workflows, or create them via the API.
-
-## Quick Links
-
-- [Configuration](/docs/configuration/environment-variables)
-- [Deployment Guides](/docs/getting-started/operators/)
-- [Troubleshooting](/docs/troubleshooting/common-issues)

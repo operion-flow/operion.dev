@@ -1,0 +1,27 @@
+---
+title: Scheduler
+description: Start a workflow on a cron schedule
+---
+
+`trigger:scheduler` starts a workflow at the times a cron expression gives.
+
+```json
+{"id": "trigger", "name": "Every weekday at 9", "type": "trigger:scheduler", "category": "trigger", "enabled": true, "config": {"cron_expression": "0 9 * * 1-5", "timezone": "America/Sao_Paulo"}}
+```
+
+| Config | Description |
+|---|---|
+| `cron_expression` | Required. Five fields (minute, hour, day of month, month, day of week), or a descriptor such as `@hourly`, `@daily` or `@every 90m` |
+| `timezone` | An IANA time zone such as `America/Sao_Paulo`. Defaults to UTC |
+
+Publishing the workflow registers its schedule, and only published workflows fire. Each firing starts one execution, even with several Operion replicas. If Operion was down when a run was due, the schedule fires once when it is back and then follows the expression again.
+
+## What the trigger sends on
+
+| Field | Description |
+|---|---|
+| `scheduled_time` | The time the run was due, in RFC 3339 |
+| `execution_time` | When the trigger ran |
+| `cron_expression` | The node's expression |
+| `timezone` | The node's time zone |
+| `trigger_data` | The raw event, with `scheduled_time` |

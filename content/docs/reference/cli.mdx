@@ -1,0 +1,33 @@
+---
+title: CLI
+description: The operion commands and their flags
+---
+
+The `operion` binary has two commands.
+
+## operion serve
+
+Runs the HTTP API, the webhooks, the scheduler, the Kafka consumer and the worker in one process, on PostgreSQL. It applies its migrations on start.
+
+```bash
+operion serve --database-url "postgres://localhost:5432/operion?sslmode=disable" --api-token dev-token
+```
+
+Every flag and its environment variable are in [configuration](/docs/operating/configuration).
+
+## operion run
+
+Validates a workflow file and runs it against an event in memory, with no database, then prints the execution as JSON. It exits with an error when the workflow is invalid or the execution fails. See [run a workflow locally](/docs/getting-started/run-locally).
+
+```bash
+operion run --workflow workflow.json --event event.json
+```
+
+| Flag | Description |
+|---|---|
+| `--workflow` | Required. Path to the workflow JSON |
+| `--event` | Required. Path to the event JSON the trigger receives |
+| `--trigger` | The trigger node id, required when the workflow has more than one trigger |
+| `--node-types` | A JSON file of [remote node types](/docs/nodes/remote-nodes#from-a-file) keyed by id, for workflows that use them |
+
+Waits and retries continue right away, and a remote node that answers `202` fails, because nothing would receive its callback.

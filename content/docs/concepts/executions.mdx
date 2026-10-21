@@ -1,0 +1,73 @@
+---
+title: Executions
+description: How an execution runs, waits, retries and records each node's result
+---
+
+An execution is one run of a published workflow. A trigger creates it with status `running`, and Operion follows the output ports from the trigger until no node is left to run. Then the execution is `completed`, or `failed` with an `error_message` when a node failed with nothing connected to its `error` port.
+
+```json
+{
+  "id": "6c1d...",
+  "workflow_id": "0f9a...",
+  "status": "completed",
+  "trigger_data": {"body": {"name": "Ana"}},
+  "node_results": {
+    "trigger": {"node_id": "trigger", "status": "success", "data": {"body": {"name": "Ana"}}},
+    "greet": {"node_id": "greet", "status": "success", "data": {"result": "hello Ana"}}
+  },
+  "created_at": "2026-10-21T12:00:00Z",
+  "completed_at": "2026-10-21T12:00:00Z"
+}
+```
+
+`node_results` holds, for each node that ran, its `status`, the `data` it sent on, a `timestamp` and, on failure, an `error`. Later nodes read that data in [templates](/docs/concepts/templates) as `{{.node_results.<node_id>.<field>}}`.
+
+Read executions with `GET /executions/:id` or list a workflow's newest ones with `GET /workflows/:id/executions`; see the [API reference](/docs/reference/api).
+
+## How work is stored
+
+Every step of an execution is a row in the PostgreSQL `jobs` table. The worker claims due rows with `FOR UPDATE SKIP LOCKED` and runs each one in a transaction, so:
+
+- an execution survives a restart and continues where it stopped;
+- several Operion replicas can share the same database, and each step runs on one of them;
+- a step interrupted by a crash runs again, so the services your nodes call should accept a repeated request.
+
+An execution always runs the workflow version it started with, even if a newer version is published while it waits.
+
+## Waits
+
+A `wait` node holds its branch for a `duration`, and a `wait_until` node holds it until a time. While it holds, the node's result has status `waiting` and a `resume_at` time, and the execution stays `running`. When the time comes, the worker continues the branch with the data the node received.
+
+To continue a waiting node earlier, call the API:
+
+```bash
+curl -s -X POST localhost:9091/executions/<execution-id>/nodes/<node-id>/resume \
+  -H 'Authorization: Bearer dev-token' \
+  -H 'X-Tenant-Id: acme' \
+  -H 'Content-Type: application/json' \
+  -d '{"approved": true}'
+```
+
+A JSON object in the body becomes the node's data; without a body the node sends on the data it held. The call answers `202`, or `409` when the node is not waiting or was already resumed.
+
+A [remote node](/docs/nodes/remote-nodes) that answers later waits the same way, with `answer_by` instead of `resume_at`, until its service calls back.
+
+## Retries
+
+Any action accepts a retry policy next to its `config`:
+
+```json
+{
+  "id": "notify",
+  "name": "notify",
+  "type": "httprequest",
+  "category": "action",
+  "enabled": true,
+  "config": {"url": "https://example.com/hooks", "method": "POST", "body": "{\"id\": \"{{.execution.id}}\"}"},
+  "retry": {"attempts": 3, "initial": "10s", "max": "5m"}
+}
+```
+
+When the node fails, by an error or through its `error` port, Operion runs it again after `initial`, doubling the wait up to `max`, until it has run `attempts` times in total. Meanwhile the node's result has status `retrying` with the last `error`, and the execution stays `running`. Only after the last attempt does the failure follow the `error` port or fail the execution.
+
+`attempts` must be at least 1, and `initial` and `max` are Go durations with `max` no shorter than `initial`. A retry covers the call a node makes, not an answer that arrives later through a remote node's callback.

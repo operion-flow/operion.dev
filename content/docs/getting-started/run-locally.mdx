@@ -1,0 +1,46 @@
+---
+title: Run a workflow locally
+description: Validate and run a workflow file against an event with operion run, with no database
+---
+
+`operion run` validates a workflow file and runs it against an event in memory. It needs no database and no server, so it is the fastest way to try a workflow while you write it, in a terminal or in CI.
+
+## Get the binary
+
+Build it from source with Go 1.27 or later:
+
+```bash
+git clone https://github.com/operion-flow/operion.git
+cd operion
+go build -o operion ./cmd/operion
+```
+
+Or use the container image and mount the current directory:
+
+```bash
+docker run --rm -v "$PWD:/work" -w /work ghcr.io/operion-flow/operion:0.1 run --workflow workflow.json --event event.json
+```
+
+## Run a workflow
+
+Take the `workflow.json` from the [quick start](/docs/getting-started/quick-start) and save the event the trigger receives as `event.json`. For a webhook trigger it is the request as Operion sees it:
+
+```json title="event.json"
+{"body": {"name": "Ana"}}
+```
+
+Then run:
+
+```bash
+./operion run --workflow workflow.json --event event.json
+```
+
+It prints the execution as JSON, with `"status": "completed"` and `"result": "hello Ana"` under `node_results.greet.data`. When the execution fails, it prints it too and exits with an error, so a script or a CI job can rely on the exit code.
+
+## What differs from serve
+
+- **Waits and retries do not wait.** A `wait` node, a `wait_until` node or a retry continues right away.
+- **Remote nodes cannot answer later.** A remote node that answers `202` fails at once, because there is no server to call back. Pass `--node-types` to resolve remote node types from a file instead of the database; see [remote nodes](/docs/nodes/remote-nodes).
+- **One trigger at a time.** When the workflow has more than one trigger node, pick one with `--trigger <node-id>`.
+
+All flags are in the [CLI reference](/docs/reference/cli).

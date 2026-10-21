@@ -1,0 +1,33 @@
+---
+title: Tenants
+description: How Operion keeps each company's workflows and executions apart, and who it trusts to say which tenant a call is for
+---
+
+Operion serves many tenants, such as the companies that use your platform, from one deployment. Every workflow belongs to one tenant, and so do its executions.
+
+## The API acts for a tenant
+
+Workflow and execution routes take the tenant from the `X-Tenant-Id` header:
+
+- a request without it is refused with `400`;
+- a workflow or execution of another tenant answers `404`, as if it did not exist;
+- a workflow created through the API always belongs to the tenant of the request.
+
+Operion trusts the header. The API token belongs to a trusted backend, usually your platform's own, which authenticates its users and decides which tenant each call acts for. Do not hand the token to a tenant or to a browser: whoever holds it can act for any tenant and call the `/platform` routes.
+
+## Events reach only their tenant
+
+- **Webhooks** carry the tenant in the path, `POST /webhooks/<tenant>/<path>`, and start only that tenant's published workflows.
+- **Catalog events** carry the tenant inside the message, in a payload field or a Kafka header the [event definition](/docs/triggers/catalog-events) names. A message starts only the `trigger:event` workflows of its tenant.
+- **Schedules** start the workflow they belong to.
+
+`trigger:kafka` is the exception: it starts every published workflow that listens on the topic, whatever its tenant. Keep it for the platform's own workflows and give tenants catalog events.
+
+## Platform and tenants
+
+The platform operator owns what all tenants share:
+
+- the [event catalog](/docs/triggers/catalog-events), with `PUT /platform/event-definitions/:key`;
+- the [remote node types](/docs/nodes/remote-nodes), with `PUT /platform/node-types/:id` or a node types file.
+
+`GET /catalog/events` lists the catalog without its Kafka details, so your backend can show tenants the events they can build workflows on.
