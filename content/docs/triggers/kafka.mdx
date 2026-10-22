@@ -17,7 +17,7 @@ description: Start a workflow from every message on a Kafka topic, for the platf
 `trigger:kafka` ignores tenants: a message starts every published workflow listening on the topic, whoever owns it. Use it for the platform's own workflows, and give tenants [catalog events](/docs/triggers/catalog-events), which route each message to its tenant.
 </Callout>
 
-It needs `serve` with `--kafka-brokers`, and it is consumed and delivered like catalog events: see [delivery](/docs/triggers/catalog-events#delivery).
+It needs `serve` with `--kafka-brokers`. The brokers and the consumer group (`--kafka-group`) come from `serve`, not from the node, and the topic is consumed and delivered like catalog events: see [delivery](/docs/triggers/catalog-events#delivery).
 
 ## What the trigger sends on
 
@@ -27,4 +27,3 @@ It needs `serve` with `--kafka-brokers`, and it is consumed and delivered like c
 | `key` | The message key |
 | `headers` | The Kafka headers |
 | `topic`, `partition`, `offset`, `timestamp` | Where the message came from |
-| `config` | The node's config |
