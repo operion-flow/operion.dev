@@ -29,5 +29,6 @@ operion run --workflow workflow.json --event event.json
 | `--event` | Required. Path to the event JSON the trigger receives |
 | `--trigger` | The trigger node id, required when the workflow has more than one trigger |
 | `--node-types` | A JSON file of [remote node types](/docs/nodes/remote-nodes#from-a-file) keyed by id, for workflows that use them |
+| `--allow-env` | Environment variables [templates](/docs/concepts/templates#credentials) may read with `{{env "NAME"}}`, comma separated |
 
 Waits and retries continue right away, and a remote node that answers `202` fails, because nothing would receive its callback.

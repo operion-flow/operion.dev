@@ -1,6 +1,6 @@
 ---
 title: Templates
-description: Read earlier results, the event and workflow variables in node configs with Go templates
+description: Read earlier results, the event, workflow variables and allowed environment variables in node configs with Go templates
 ---
 
 Node configs are [Go templates](https://pkg.go.dev/text/template). A template reads what the execution knows so far:
@@ -11,8 +11,25 @@ Node configs are [Go templates](https://pkg.go.dev/text/template). A template re
 | `{{.trigger_data.<field>}}` | The event that started the execution |
 | `{{.variables.<name>}}` | The workflow's `variables` |
 | `{{.execution.id}}`, `{{.execution.workflow_id}}` | The current execution and workflow |
+| `{{env "NAME"}}` | An environment variable of the server that [`--allow-env`](#credentials) names |
 
-Templates cannot read the server's environment variables. A value a workflow needs, such as an API key, goes in `variables` or comes from the event.
+## Credentials
+
+A credential such as an API token or a Slack webhook URL stays out of the workflow. The operator puts it in the server's environment and names it in [`--allow-env`](/docs/operating/configuration):
+
+```bash
+CRM_TOKEN=... SLACK_WEBHOOK_URL=... operion serve --allow-env CRM_TOKEN,SLACK_WEBHOOK_URL
+```
+
+A node then reads it with `env`:
+
+```json
+{"url": "https://crm.example.com/employees", "headers": {"Authorization": "Bearer {{env \"CRM_TOKEN\"}}"}}
+```
+
+Reading a variable that `--allow-env` does not name is an error, so the node fails. A failed `httprequest` reports its URL as written in the config, not as rendered, so a secret URL does not reach the execution. A value still ends up in the execution if the workflow puts it there, for example in a `transform` result or a `log` message.
+
+## Templated fields
 
 These config fields are templates:
 

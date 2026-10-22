@@ -12,6 +12,7 @@ description: Every flag and environment variable of operion serve
 | `--port` | `PORT` | `9091` | HTTP port |
 | `--public-url` | `OPERION_PUBLIC_URL` | | Base URL remote nodes call back to, such as `http://operion:9091`. Without it, a remote node that answers `202` fails |
 | `--node-types` | `NODE_TYPES_FILE` | | JSON file of [remote node types](/docs/nodes/remote-nodes#from-a-file) keyed by id, registered on start |
+| `--allow-env` | `OPERION_ALLOW_ENV` | | Environment variables [templates](/docs/concepts/templates#credentials) may read with `{{env "NAME"}}`, comma separated. `serve` does not start when one of them is not set |
 | `--log-level` | `LOG_LEVEL` | `info` | `debug`, `info`, `warn` or `error` |
 | `--poll-interval` | | `1s` | How long the worker and the scheduler wait when nothing is due, and how often the Kafka consumer checks for new topics |
 | `--kafka-brokers` | `KAFKA_BROKERS` | | Kafka brokers, comma separated. Kafka is off when empty |
@@ -22,7 +23,7 @@ description: Every flag and environment variable of operion serve
 
 Traces are exported over OTLP/HTTP when `OTEL_EXPORTER_OTLP_ENDPOINT` or `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` is set.
 
-Workflows cannot read these variables, or any other variable of the server's environment.
+Workflows read only the variables `--allow-env` names; they cannot read these settings or anything else in the server's environment.
 
 For example:
 
