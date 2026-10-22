@@ -18,7 +18,7 @@ go build -o operion ./cmd/operion
 Or use the container image and mount the current directory:
 
 ```bash
-docker run --rm -v "$PWD:/work" -w /work ghcr.io/operion-flow/operion:0.1 run --workflow workflow.json --event event.json
+docker run --rm -v "$PWD:/work" -w /work ghcr.io/operion-flow/operion:0.2 run --workflow workflow.json --event event.json
 ```
 
 ## Run a workflow
