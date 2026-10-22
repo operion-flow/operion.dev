@@ -2,6 +2,7 @@
   "title": "Getting Started",
   "pages": [
     "quick-start",
+    "with-an-agent",
     "run-locally"
   ]
 }
