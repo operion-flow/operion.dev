@@ -25,6 +25,7 @@ Errors on these routes are `application/problem+json`:
 | `GET /workflows` | List the tenant's workflows |
 | `GET /workflows/:id` | Get a workflow |
 | `POST /workflows/:id/publish` | Validate the workflow and publish it. `200` with the workflow, `422` with every problem found |
+| `POST /workflows/:id/unpublish` | [Turn the published workflow off](/docs/concepts/workflows#turning-a-workflow-off): its triggers stop and its schedules are dropped, executions already running or waiting finish. `200` with the workflow, `409` when it is not published |
 | `GET /workflows/:id/executions` | List the workflow's executions, newest first. `?limit=` from 1 to 500, default 50 |
 
 ## Executions

@@ -62,7 +62,6 @@ Any action accepts a retry policy next to its `config`:
   "name": "notify",
   "type": "httprequest",
   "category": "action",
-  "enabled": true,
   "config": {"url": "https://example.com/hooks", "method": "POST", "body": "{\"id\": \"{{.execution.id}}\"}"},
   "retry": {"attempts": 3, "initial": "10s", "max": "5m"}
 }

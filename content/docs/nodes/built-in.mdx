@@ -17,7 +17,6 @@ Calls an HTTP endpoint.
   "name": "Notify Slack",
   "type": "httprequest",
   "category": "action",
-  "enabled": true,
   "config": {
     "url": "https://hooks.slack.com/services/T000/B000/XXXX",
     "method": "POST",
@@ -43,7 +42,7 @@ Ports: `success` and `error`.
 Builds a value from a template.
 
 ```json
-{"id": "greet", "name": "greet", "type": "transform", "category": "action", "enabled": true, "config": {"expression": "{\"full_name\": \"{{.node_results.trigger.body.first}} {{.node_results.trigger.body.last}}\"}"}}
+{"id": "greet", "name": "greet", "type": "transform", "category": "action", "config": {"expression": "{\"full_name\": \"{{.node_results.trigger.body.first}} {{.node_results.trigger.body.last}}\"}"}}
 ```
 
 | Config | Description |
@@ -57,7 +56,7 @@ Ports: `success` and `error`. `success` sends on `{"result": <value>}`, where th
 Writes a line to Operion's log.
 
 ```json
-{"id": "done", "name": "done", "type": "log", "category": "action", "enabled": true, "config": {"message": "order {{.node_results.trigger.body.order_id}} handled", "level": "info"}}
+{"id": "done", "name": "done", "type": "log", "category": "action", "config": {"message": "order {{.node_results.trigger.body.order_id}} handled", "level": "info"}}
 ```
 
 | Config | Description |
@@ -72,7 +71,7 @@ Ports: `success` and `error`. `success` sends on `message`, `level` and `logged`
 Takes one of two paths.
 
 ```json
-{"id": "big", "name": "Big order?", "type": "conditional", "category": "action", "enabled": true, "config": {"condition": "{{gt .node_results.trigger.body.total 1000.0}}"}}
+{"id": "big", "name": "Big order?", "type": "conditional", "category": "action", "config": {"condition": "{{gt .node_results.trigger.body.total 1000.0}}"}}
 ```
 
 | Config | Description |
@@ -93,7 +92,6 @@ Takes the path named after a value.
   "name": "Route by plan",
   "type": "switch",
   "category": "action",
-  "enabled": true,
   "config": {
     "value": "{{.node_results.trigger.body.plan}}",
     "cases": [
@@ -116,7 +114,7 @@ Ports: one per case `output_port`, `default` when no case matches, and `error`. 
 Holds its branch for a duration.
 
 ```json
-{"id": "cool_off", "name": "Wait three days", "type": "wait", "category": "action", "enabled": true, "config": {"duration": "72h"}}
+{"id": "cool_off", "name": "Wait three days", "type": "wait", "category": "action", "config": {"duration": "72h"}}
 ```
 
 | Config | Description |
@@ -130,7 +128,7 @@ Port: `success`, which sends on the data the node received, or the body of an ea
 Holds its branch until a time.
 
 ```json
-{"id": "on_start", "name": "Wait for the first day", "type": "wait_until", "category": "action", "enabled": true, "config": {"until": "{{.node_results.trigger.payload.start_date}}"}}
+{"id": "on_start", "name": "Wait for the first day", "type": "wait_until", "category": "action", "config": {"until": "{{.node_results.trigger.payload.start_date}}"}}
 ```
 
 | Config | Description |

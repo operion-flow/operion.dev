@@ -52,8 +52,8 @@ This workflow starts when someone posts to the webhook path `/greet` and builds 
   "name": "greet",
   "description": "Greets whoever calls the webhook",
   "nodes": [
-    {"id": "trigger", "name": "trigger", "type": "trigger:webhook", "category": "trigger", "enabled": true, "config": {"webhook_path": "/greet"}},
-    {"id": "greet", "name": "greet", "type": "transform", "category": "action", "enabled": true, "config": {"expression": "hello {{.node_results.trigger.body.name}}"}}
+    {"id": "trigger", "name": "trigger", "type": "trigger:webhook", "category": "trigger", "config": {"webhook_path": "/greet"}},
+    {"id": "greet", "name": "greet", "type": "transform", "category": "action", "config": {"expression": "hello {{.node_results.trigger.body.name}}"}}
   ],
   "connections": [
     {"id": "c1", "source_port": "trigger:success", "target_port": "greet:main"}

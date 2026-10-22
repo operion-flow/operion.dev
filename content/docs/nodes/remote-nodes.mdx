@@ -61,7 +61,7 @@ Node types can also live in a JSON file keyed by id, each entry with the same bo
 ## Use it in a workflow
 
 ```json
-{"id": "benefit", "name": "Grant benefit", "type": "grant_benefit", "category": "action", "enabled": true, "config": {"amount": "{{.node_results.trigger.body.amount}}"}}
+{"id": "benefit", "name": "Grant benefit", "type": "grant_benefit", "category": "action", "config": {"amount": "{{.node_results.trigger.body.amount}}"}}
 ```
 
 The node has the input port `main` and the type's `outputs`, so this one connects as `benefit:approved`, `benefit:rejected` and `benefit:error`. Every string in `config` is a [template](/docs/concepts/templates), at any depth.
