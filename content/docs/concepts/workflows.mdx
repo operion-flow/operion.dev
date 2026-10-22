@@ -11,8 +11,8 @@ A workflow is a JSON document with nodes and the connections between their ports
   "description": "Greets whoever calls the webhook",
   "variables": {"greeting": "hello"},
   "nodes": [
-    {"id": "trigger", "name": "trigger", "type": "trigger:webhook", "category": "trigger", "enabled": true, "config": {"webhook_path": "/greet"}},
-    {"id": "greet", "name": "greet", "type": "transform", "category": "action", "enabled": true, "config": {"expression": "{{.variables.greeting}} {{.node_results.trigger.body.name}}"}}
+    {"id": "trigger", "name": "trigger", "type": "trigger:webhook", "category": "trigger", "config": {"webhook_path": "/greet"}},
+    {"id": "greet", "name": "greet", "type": "transform", "category": "action", "config": {"expression": "{{.variables.greeting}} {{.node_results.trigger.body.name}}"}}
   ],
   "connections": [
     {"id": "c1", "source_port": "trigger:success", "target_port": "greet:main"}
@@ -41,9 +41,10 @@ Operion sets `id`, `status`, `tenant_id` and the timestamps itself.
 | `type` | A [built-in node type](/docs/nodes/built-in), a [trigger](/docs/triggers/webhook) or a [remote node type](/docs/nodes/remote-nodes) |
 | `category` | `trigger` for triggers, `action` for everything else |
 | `config` | The node type's settings. String values are [templates](/docs/concepts/templates) |
-| `enabled` | Publishing needs at least one trigger with `"enabled": true` |
 | `retry` | Optional [retry policy](/docs/concepts/executions#retries) for actions |
 | `position_x`, `position_y` | Where an editor draws the node; Operion ignores them |
+
+Older workflows may carry an `enabled` key on their nodes; Operion ignores it. To turn a workflow off, [unpublish](#turning-a-workflow-off) it.
 
 ## Ports and connections
 
@@ -63,16 +64,22 @@ A workflow is created as a `draft` and does nothing until it is published. Publi
 - every `retry` policy is valid;
 - every connection joins an existing output port to an existing input port;
 - there is no cycle, and every node is reachable from a trigger;
-- at least one trigger is enabled;
+- there is at least one trigger;
 - every `trigger:event` names an event in the [catalog](/docs/triggers/catalog-events).
 
 Once published, the workflow's triggers are live: its webhook answers, its schedule fires and its Kafka topics are consumed.
+
+## Turning a workflow off
+
+`POST /workflows/:id/unpublish` sets the published workflow to `unpublished`. Its triggers stop right away: its webhook path, Kafka topics and catalog events no longer start it (a webhook path no published workflow listens on answers `404`), and its schedules are dropped. Executions already running or waiting finish on it. Unpublishing a workflow that is not published answers `409`.
+
+Publishing it again turns it back on, and its schedules start from their next run, without firing the runs missed while it was off.
 
 ## Versions
 
 A workflow's status is `draft`, `published` or `unpublished`. Workflows that share a `workflow_group_id` are versions of one another, and only one of them is published at a time.
 
-To change a published workflow, create a new draft with the same `workflow_group_id` as the published one and publish it. The previous version becomes `unpublished` in the same transaction. A new workflow without `workflow_group_id` starts its own group, and the group's id is the `id` of that first version.
+To change a published workflow, create a new draft with the same `workflow_group_id` as the published one and publish it. The previous version becomes `unpublished` in the same transaction, and the group's schedules start again from their next run. A new workflow without `workflow_group_id` starts its own group, and the group's id is the `id` of that first version.
 
 A group belongs to the tenant of its first version. Creating a version in a group of another tenant, or in a group that does not exist, answers `404`, and publishing never unpublishes another tenant's workflow.
 

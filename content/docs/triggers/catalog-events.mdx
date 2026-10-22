@@ -42,7 +42,7 @@ Several events can share a topic, for example when different event types travel 
 ## Use it in a workflow
 
 ```json
-{"id": "trigger", "name": "Employee created", "type": "trigger:event", "category": "trigger", "enabled": true, "config": {"event": "employee_created"}}
+{"id": "trigger", "name": "Employee created", "type": "trigger:event", "category": "trigger", "config": {"event": "employee_created"}}
 ```
 
 Publishing a workflow whose `trigger:event` names a key missing from the catalog is refused with `422`.
