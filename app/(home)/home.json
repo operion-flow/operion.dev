@@ -1,0 +1,22 @@
+{
+  "title": "Operion",
+  "tagline": "Event-driven workflows for every company on your platform, in one binary on PostgreSQL.",
+  "links": [
+    { "label": "Get Started", "href": "/docs" },
+    { "label": "API Reference", "href": "/docs/reference/api" }
+  ],
+  "features": [
+    {
+      "title": "Catalog events",
+      "text": "Register your Kafka events once and let each tenant build workflows on them, from webhooks and schedules too."
+    },
+    {
+      "title": "Your own nodes",
+      "text": "Add node types as HTTP services in any language, with signed calls and answers that can come days later."
+    },
+    {
+      "title": "One binary, one database",
+      "text": "Run a single container next to PostgreSQL, with waits and retries that survive restarts."
+    }
+  ]
+}
