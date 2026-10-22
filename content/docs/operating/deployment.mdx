@@ -8,14 +8,14 @@ Operion is one container and one PostgreSQL database. Remote node types, if you 
 ## The image
 
 ```bash
-docker pull ghcr.io/operion-flow/operion:0.1
+docker pull ghcr.io/operion-flow/operion:0.2
 ```
 
-Images are published for `linux/amd64` from each release tag, as `ghcr.io/operion-flow/operion:<version>` (such as `0.1.0`), `:<major>.<minor>` (such as `0.1`, which follows patch releases) and `:latest`.
+Images are published for `linux/amd64` from each release tag, as `ghcr.io/operion-flow/operion:<version>` (such as `0.2.0`), `:<major>.<minor>` (such as `0.2`, which follows patch releases) and `:latest`.
 
-The image's entrypoint is the `operion` binary and its default command is `serve`, so `docker run ghcr.io/operion-flow/operion:0.1` starts the server and any other arguments replace `serve`.
+The image's entrypoint is the `operion` binary and its default command is `serve`, so `docker run ghcr.io/operion-flow/operion:0.2` starts the server and any other arguments replace `serve`.
 
-The image is built on distroless static: it has CA certificates and time zone data but no shell, and it runs as a non-root user (uid 65532). Files you mount, such as a [node types file](/docs/nodes/remote-nodes#from-a-file), must be readable by that user. Release `0.1.0` predates this and is built on Debian slim, running as root.
+The image is built on distroless static: it has CA certificates and time zone data but no shell, and it runs as a non-root user (uid 65532). Files you mount, such as a [node types file](/docs/nodes/remote-nodes#from-a-file), must be readable by that user.
 
 ## PostgreSQL
 
