@@ -42,5 +42,6 @@ It prints the execution as JSON, with `"status": "completed"` and `"result": "he
 - **Waits and retries do not wait.** A `wait` node, a `wait_until` node or a retry continues right away.
 - **Remote nodes cannot answer later.** A remote node that answers `202` fails at once, because there is no server to call back. Pass `--node-types` to resolve remote node types from a file instead of the database; see [remote nodes](/docs/nodes/remote-nodes).
 - **One trigger at a time.** When the workflow has more than one trigger node, pick one with `--trigger <node-id>`.
+- **Secrets come from your shell.** Export `OPERION_SECRET_<NAME>` before `operion run`, the same as for `serve`; see [secrets](/docs/concepts/secrets). The printed execution shows them as `***`.
 
 All flags are in the [CLI reference](/docs/reference/cli).

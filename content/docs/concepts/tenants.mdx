@@ -3,7 +3,7 @@ title: Tenants
 description: How Operion keeps each company's workflows and executions apart, and who it trusts to say which tenant a call is for
 ---
 
-Operion serves many tenants, such as the companies that use your platform, from one deployment. Every workflow belongs to one tenant, and so do its executions.
+Operion serves many tenants, such as the companies that use your platform, from one deployment. Every workflow belongs to one tenant, and so do its executions. [Secrets](/docs/concepts/secrets#scope) are the exception: they belong to the deployment, and every tenant's workflows can read them.
 
 ## The API acts for a tenant
 
