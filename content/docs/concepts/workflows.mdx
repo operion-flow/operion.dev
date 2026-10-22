@@ -28,7 +28,7 @@ A workflow is a JSON document with nodes and the connections between their ports
 | `connections` | Which output port feeds which input port |
 | `variables` | Values the nodes read in templates as `{{.variables.<name>}}` |
 | `metadata` | Free-form data stored with the workflow |
-| `workflow_group_id` | Links versions of the same workflow; see [versions](#versions) |
+| `workflow_group_id` | Links versions of the same workflow, a UUID; see [versions](#versions) |
 
 Operion sets `id`, `status`, `tenant_id` and the timestamps itself.
 
@@ -72,6 +72,8 @@ Once published, the workflow's triggers are live: its webhook answers, its sched
 
 A workflow's status is `draft`, `published` or `unpublished`. Workflows that share a `workflow_group_id` are versions of one another, and only one of them is published at a time.
 
-To change a published workflow, create a new draft with the same `workflow_group_id` as the published one and publish it. The previous version becomes `unpublished` in the same transaction. A new workflow without `workflow_group_id` starts its own group.
+To change a published workflow, create a new draft with the same `workflow_group_id` as the published one and publish it. The previous version becomes `unpublished` in the same transaction. A new workflow without `workflow_group_id` starts its own group, and the group's id is the `id` of that first version.
+
+A group belongs to the tenant of its first version. Creating a version in a group of another tenant, or in a group that does not exist, answers `404`, and publishing never unpublishes another tenant's workflow.
 
 There is no endpoint to edit or delete a workflow in place yet.
