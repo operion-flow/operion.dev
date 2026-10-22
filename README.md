@@ -50,6 +50,12 @@ A `source.config.ts` config file has been included, you can customise different 
 
 Read the [Introduction](https://fumadocs.dev/docs/mdx) for further details.
 
+## Deployment
+
+`npm run build` exports a static site to `out/` (`output: 'export'`); search uses an index built at the same time, so nothing runs on a server. Cloudflare Workers serves `out/` as static assets, as `wrangler.jsonc` declares, and serves `out/404.html` for unknown paths.
+
+The Cloudflare project is connected to this repository with Workers Builds: build command `npm run build`, deploy command `npx wrangler deploy`. A push to `main` deploys the site, and other branches get preview URLs.
+
 ## Learn More
 
 To learn more about Next.js and Fumadocs, take a look at the following
