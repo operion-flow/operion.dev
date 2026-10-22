@@ -23,6 +23,10 @@ The image is built on distroless static: it has CA certificates and time zone da
 
 PostgreSQL holds everything: workflows, executions, schedules, pending steps, the event catalog and the remote node types. Back it up like any production database.
 
+### Execution retention
+
+Every execution is kept with its node results and trigger data, so without a limit the database only grows. Set `EXECUTION_RETENTION` (for example `720h` for 30 days) and Operion deletes completed and failed executions that finished longer ago than that, together with their pending steps. Running and waiting executions are never deleted. The cleanup runs at start and then at most hourly, in batches of 500 that each take a short lock; with several replicas, they share the batches.
+
 ## Running several replicas
 
 Run as many replicas as you need against the same database. The worker and the scheduler claim rows with `FOR UPDATE SKIP LOCKED`, so each step and each schedule firing runs once, and Kafka partitions are split across the consumer group. Any replica can take webhooks, callbacks and API calls, so put them behind one load balancer.
@@ -32,6 +36,7 @@ Run as many replicas as you need against the same database. The worker and the s
 - **`OPERION_API_TOKEN`**: a long random value. Whoever holds it can act for every tenant; see [tenants](/docs/concepts/tenants).
 - **`OPERION_PUBLIC_URL`**: the address remote node services reach Operion at, such as `http://operion:9091` inside a cluster. Without it, remote nodes cannot [answer later](/docs/nodes/remote-nodes#answer-later).
 - **`KAFKA_BROKERS`**: only when workflows use [catalog events](/docs/triggers/catalog-events) or [Kafka topics](/docs/triggers/kafka).
+- **`EXECUTION_RETENTION`**: how long to keep finished executions, such as `720h`; by default they are kept forever. See [execution retention](#execution-retention).
 
 Every setting is listed in [configuration](/docs/operating/configuration).
 

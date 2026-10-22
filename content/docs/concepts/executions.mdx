@@ -34,6 +34,8 @@ Every step of an execution is a row in the PostgreSQL `jobs` table. The worker c
 
 An execution always runs the workflow version it started with, even if a newer version is published while it waits.
 
+Finished executions stay readable through `GET /executions/:id` until the [execution retention](/docs/operating/deployment#execution-retention) removes them; by default they are kept forever.
+
 ## Waits
 
 A `wait` node holds its branch for a `duration`, and a `wait_until` node holds it until a time. While it holds, the node's result has status `waiting` and a `resume_at` time, and the execution stays `running`. When the time comes, the worker continues the branch with the data the node received.
