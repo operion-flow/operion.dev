@@ -59,4 +59,5 @@ These need no token.
 |---|---|
 | `POST /webhooks/:tenant/*` | Start the tenant's published workflows whose [webhook trigger](/docs/triggers/webhook) listens on the rest of the path. `202` with `{"executions": [...]}`, `404` when none listens, `400` when the body is not JSON |
 | `POST /callbacks/:execution_id/:node_id/:token` | The `callback_url` a [remote node](/docs/nodes/remote-nodes#answer-later) answers through. `202`, `400`, `404` or `409` |
-| `GET /livez`, `GET /readyz` | Health checks, `200` while the process serves HTTP |
+| `GET /livez` | Liveness, `200` while the process serves HTTP |
+| `GET /readyz` | Readiness, `200` when Postgres answers a ping within a second, `503` otherwise |

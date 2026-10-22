@@ -50,7 +50,8 @@ Only the webhooks, and the callbacks when remote node services live elsewhere, n
 
 ## Health, logs and traces
 
-- `GET /livez` and `GET /readyz` answer `200` while the process serves HTTP. They do not check the database.
+- `GET /livez` answers `200` while the process serves HTTP. Use it for liveness, so a database outage does not restart healthy processes.
+- `GET /readyz` answers `200` when Postgres answers a ping within a second, and `503` when it does not or `serve` is shutting down. Use it for readiness, so traffic only reaches instances that can reach their database.
 - Logs go to stderr as text lines, at the level from `LOG_LEVEL`.
 - Traces are exported over OTLP/HTTP when `OTEL_EXPORTER_OTLP_ENDPOINT` or `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` is set; the other standard `OTEL_*` variables apply.
 
