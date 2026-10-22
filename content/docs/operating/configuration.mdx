@@ -12,6 +12,7 @@ description: Every flag and environment variable of operion serve
 | `--port` | `PORT` | `9091` | HTTP port |
 | `--public-url` | `OPERION_PUBLIC_URL` | | Base URL remote nodes call back to, such as `http://operion:9091`. Without it, a remote node that answers `202` fails |
 | `--node-types` | `NODE_TYPES_FILE` | | JSON file of [remote node types](/docs/nodes/remote-nodes#from-a-file) keyed by id, registered on start |
+| `--execution-retention` | `EXECUTION_RETENTION` | `0` | How long to keep completed and failed executions, such as `720h`. `0` keeps them forever; see [execution retention](/docs/operating/deployment#execution-retention) |
 | `--log-level` | `LOG_LEVEL` | `info` | `debug`, `info`, `warn` or `error` |
 | `--poll-interval` | | `1s` | How long the worker and the scheduler wait when nothing is due, and how often the Kafka consumer checks for new topics |
 | `--kafka-brokers` | `KAFKA_BROKERS` | | Kafka brokers, comma separated. Kafka is off when empty |
