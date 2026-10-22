@@ -32,7 +32,7 @@ Errors on these routes are `application/problem+json`:
 | Route | Description |
 |---|---|
 | `GET /executions/:id` | Get an [execution](/docs/concepts/executions) with its status and node results |
-| `POST /executions/:id/nodes/:node_id/resume` | Continue a waiting node now. A JSON object in the body becomes the node's data; without a body the node sends on what it held. `202`, or `409` when the node is not waiting or was already resumed |
+| `POST /executions/:id/nodes/:node_id/resume` | Continue a waiting node now. A JSON object in the body becomes the node's data; without a body the node sends on what it held. A remote node waiting for its callback takes its answer, `{"port": "<output>", "data": {...}}`. `202`, `400` for a remote node without `port`, or `409` when the node is not waiting or was already resumed |
 
 ## Catalog
 

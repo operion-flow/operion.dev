@@ -50,7 +50,7 @@ curl -s -X POST localhost:9091/executions/<execution-id>/nodes/<node-id>/resume 
 
 A JSON object in the body becomes the node's data; without a body the node sends on the data it held. The call answers `202`, or `409` when the node is not waiting or was already resumed.
 
-A [remote node](/docs/nodes/remote-nodes) that answers later waits the same way, with `answer_by` instead of `resume_at`, until its service calls back.
+A [remote node](/docs/nodes/remote-nodes) that answers later waits the same way, with `answer_by` instead of `resume_at`, until its service calls back. Resuming it through the API answers for the service, so the body must be that answer, `{"port": "<output>", "data": {...}}`; without a `port` the call answers `400` and the node keeps waiting.
 
 ## Retries
 
