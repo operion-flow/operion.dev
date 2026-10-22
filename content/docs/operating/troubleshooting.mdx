@@ -15,6 +15,7 @@ API errors come as `application/problem+json`, with the reason in `detail`.
 | `422` on publish | The workflow cannot run; `detail` lists every problem. See [publishing](/docs/concepts/workflows#publishing) |
 | `400` on resume | The node is a remote node waiting for its callback, and the body has no `port`; send the answer, `{"port": "<output>", "data": {...}}` |
 | `409` on resume | The node is not waiting, or it was already resumed |
+| `400` on `PUT /secrets/:name` | The name is not a lowercase letter followed by lowercase letters, digits or underscores, or the value is empty |
 
 ## Workflows that do not start
 
@@ -28,4 +29,6 @@ API errors come as `application/problem+json`, with the reason in `detail`.
 - **A template renders `<no value>`.** The path does not exist in the data; compare it with `node_results` in the execution. See [templates](/docs/concepts/templates).
 - **A remote node fails with `remote node answered 202 but serve has no --public-url`.** Set [`OPERION_PUBLIC_URL`](/docs/operating/configuration) to an address the service can reach.
 - **A remote node fails with `remote node did not call back before its deadline`.** The service did not post to `callback_url` before `answer_by`.
+- **A node fails with `secret not found: <name>`.** The workflow's tenant has no secret with that name; save it with [`PUT /secrets/:name`](/docs/concepts/secrets) for that tenant.
+- **Jobs keep failing with `secret cannot be decrypted with this key`.** `serve` runs with a different `OPERION_SECRETS_KEY` than the one the tenant's secrets were saved with. Restore the original key.
 - **The execution stays `running`.** A node is `waiting` or `retrying`; its entry in `node_results` says until when.

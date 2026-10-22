@@ -28,6 +28,7 @@ services:
     environment:
       DATABASE_URL: postgres://operion:operion@postgres:5432/operion?sslmode=disable
       OPERION_API_TOKEN: dev-token
+      OPERION_SECRETS_KEY: ZGV2LW9ubHktc2VjcmV0cy1rZXktb2YtMzItYnl0ZXM=
     ports:
       - "9091:9091"
     depends_on:
@@ -41,7 +42,7 @@ Start both:
 docker compose up
 ```
 
-The image runs `operion serve`, which applies its database migrations on start and listens on port 9091. Every API call needs the token from `OPERION_API_TOKEN` as a bearer token.
+The image runs `operion serve`, which applies its database migrations on start and listens on port 9091. Every API call needs the token from `OPERION_API_TOKEN` as a bearer token. `OPERION_SECRETS_KEY` encrypts the tenants' [secrets](/docs/concepts/secrets); outside a quick start, generate your own with `openssl rand -base64 32`.
 
 ## Create a workflow
 

@@ -10,7 +10,7 @@ The `operion` binary has two commands.
 Runs the HTTP API, the webhooks, the scheduler, the Kafka consumer and the worker in one process, on PostgreSQL. It applies its migrations on start.
 
 ```bash
-operion serve --database-url "postgres://localhost:5432/operion?sslmode=disable" --api-token dev-token
+operion serve --database-url "postgres://localhost:5432/operion?sslmode=disable" --api-token dev-token --secrets-key "$(openssl rand -base64 32)"
 ```
 
 Every flag and its environment variable are in [configuration](/docs/operating/configuration).
@@ -29,5 +29,6 @@ operion run --workflow workflow.json --event event.json
 | `--event` | Required. Path to the event JSON the trigger receives |
 | `--trigger` | The trigger node id, required when the workflow has more than one trigger |
 | `--node-types` | A JSON file of [remote node types](/docs/nodes/remote-nodes#from-a-file) keyed by id, for workflows that use them |
+| `--secrets` | A JSON file of [secret](/docs/concepts/secrets) values by name, such as `{"crm_token": "..."}`, for workflows that use `{{secret "name"}}` |
 
 Waits and retries continue right away, and a remote node that answers `202` fails, because nothing would receive its callback.

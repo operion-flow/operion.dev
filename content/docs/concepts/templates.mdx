@@ -11,8 +11,9 @@ Node configs are [Go templates](https://pkg.go.dev/text/template). A template re
 | `{{.trigger_data.<field>}}` | The event that started the execution |
 | `{{.variables.<name>}}` | The workflow's `variables` |
 | `{{.execution.id}}`, `{{.execution.workflow_id}}` | The current execution and workflow |
+| `{{secret "name"}}` | A [secret](/docs/concepts/secrets) of the workflow's tenant |
 
-Templates cannot read the server's environment variables. A value a workflow needs, such as an API key, goes in `variables` or comes from the event.
+Templates cannot read the server's environment variables. A credential such as an API key is a [secret](/docs/concepts/secrets) of the tenant, read with `{{secret "name"}}`; values in `variables` are stored and returned with the workflow.
 
 These config fields are templates:
 

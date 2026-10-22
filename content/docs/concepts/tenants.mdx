@@ -21,6 +21,8 @@ Operion trusts the header. The API token belongs to a trusted backend, usually y
 - **Catalog events** carry the tenant inside the message, in a payload field or a Kafka header the [event definition](/docs/triggers/catalog-events) names. A message starts only the `trigger:event` workflows of its tenant.
 - **Schedules** start the workflow they belong to.
 
+[Secrets](/docs/concepts/secrets) belong to a tenant too: an execution reads only the secrets of its workflow's tenant.
+
 `trigger:kafka` is the exception: it starts every published workflow that listens on the topic, whatever its tenant. Keep it for the platform's own workflows and give tenants catalog events.
 
 ## Platform and tenants

@@ -9,6 +9,7 @@ description: Every flag and environment variable of operion serve
 |---|---|---|---|
 | `--database-url` | `DATABASE_URL` | | Required. PostgreSQL connection URL |
 | `--api-token` | `OPERION_API_TOKEN` | | Required. Bearer token every API route requires. Webhooks, callbacks and health checks stay open |
+| `--secrets-key` | `OPERION_SECRETS_KEY` | | Required. Base64 of the 32-byte key that encrypts [secrets](/docs/concepts/secrets), such as the output of `openssl rand -base64 32`. `serve` does not start with an invalid key |
 | `--port` | `PORT` | `9091` | HTTP port |
 | `--public-url` | `OPERION_PUBLIC_URL` | | Base URL remote nodes call back to, such as `http://operion:9091`. Without it, a remote node that answers `202` fails |
 | `--node-types` | `NODE_TYPES_FILE` | | JSON file of [remote node types](/docs/nodes/remote-nodes#from-a-file) keyed by id, registered on start |
@@ -30,6 +31,7 @@ For example:
 ```bash
 DATABASE_URL="postgres://operion:secret@db:5432/operion?sslmode=require" \
 OPERION_API_TOKEN="$(openssl rand -hex 32)" \
+OPERION_SECRETS_KEY="<the key you keep>" \
 OPERION_PUBLIC_URL="http://operion:9091" \
 KAFKA_BROKERS="kafka-1:9092,kafka-2:9092" \
 operion serve

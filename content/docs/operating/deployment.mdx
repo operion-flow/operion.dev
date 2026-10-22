@@ -34,6 +34,7 @@ Run as many replicas as you need against the same database. The worker and the s
 ## Settings that matter in production
 
 - **`OPERION_API_TOKEN`**: a long random value. Whoever holds it can act for every tenant; see [tenants](/docs/concepts/tenants).
+- **`OPERION_SECRETS_KEY`**: generate it once with `openssl rand -base64 32`, keep it in your secret manager and back it up apart from the database. Every replica needs the same key, and secrets saved under it cannot be read without it; see [secrets](/docs/concepts/secrets#encryption).
 - **`OPERION_PUBLIC_URL`**: the address remote node services reach Operion at, such as `http://operion:9091` inside a cluster. Without it, remote nodes cannot [answer later](/docs/nodes/remote-nodes#answer-later).
 - **`KAFKA_BROKERS`**: only when workflows use [catalog events](/docs/triggers/catalog-events) or [Kafka topics](/docs/triggers/kafka).
 - **`EXECUTION_RETENTION`**: how long to keep finished executions, such as `720h`; by default they are kept forever. See [execution retention](#execution-retention).

@@ -7,9 +7,9 @@ All routes are served by `operion serve` on one port, 9091 by default.
 
 ## Authentication and tenant
 
-Every route under [Workflows](#workflows), [Executions](#executions), [Catalog](#catalog) and [Platform](#platform) needs `Authorization: Bearer <token>`, with the token given to `serve` as `OPERION_API_TOKEN`. Without it the answer is `401` with `WWW-Authenticate: Bearer`.
+Every route under [Workflows](#workflows), [Executions](#executions), [Secrets](#secrets), [Catalog](#catalog) and [Platform](#platform) needs `Authorization: Bearer <token>`, with the token given to `serve` as `OPERION_API_TOKEN`. Without it the answer is `401` with `WWW-Authenticate: Bearer`.
 
-Workflow and execution routes also need `X-Tenant-Id`. Without it the answer is `400`, and a workflow or execution of another tenant answers `404`. See [tenants](/docs/concepts/tenants).
+Workflow, execution and secret routes also need `X-Tenant-Id`. Without it the answer is `400`, and a workflow, execution or secret of another tenant answers `404`. See [tenants](/docs/concepts/tenants).
 
 Errors on these routes are `application/problem+json`:
 
@@ -34,6 +34,14 @@ Errors on these routes are `application/problem+json`:
 |---|---|
 | `GET /executions/:id` | Get an [execution](/docs/concepts/executions) with its status and node results |
 | `POST /executions/:id/nodes/:node_id/resume` | Continue a waiting node now. A JSON object in the body becomes the node's data; without a body the node sends on what it held. A remote node waiting for its callback takes its answer, `{"port": "<output>", "data": {...}}`. `202`, `400` for a remote node without `port`, or `409` when the node is not waiting or was already resumed |
+
+## Secrets
+
+| Route | Description |
+|---|---|
+| `PUT /secrets/:name` | Save a [secret](/docs/concepts/secrets) of the tenant from `{"value": "..."}`, replacing one with the same name. `204`, `400` when the name is invalid or the value is empty |
+| `GET /secrets` | List the tenant's secrets as `[{"name": "crm_token", "updated_at": "..."}]`. Values are never returned |
+| `DELETE /secrets/:name` | Delete a secret. `204`, or `404` when the tenant has no secret with that name |
 
 ## Catalog
 
