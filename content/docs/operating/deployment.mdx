@@ -48,6 +48,12 @@ Every setting is listed in [configuration](/docs/operating/configuration).
 
 Only the webhooks, and the callbacks when remote node services live elsewhere, need to be reachable from outside your network.
 
+## Outbound traffic
+
+`httprequest` and [remote nodes](/docs/nodes/remote-nodes) call whatever address their config renders to, and Operion does not filter it. A workflow can reach anything the container can reach: your internal services, `localhost`, and your cloud's metadata endpoint such as `169.254.169.254`.
+
+Decide what Operion may call with your platform's controls, such as a Kubernetes `NetworkPolicy`, security groups or an egress proxy. Block the metadata endpoint unless a workflow needs it, and allow only the internal services your workflows call.
+
 ## Health, logs and traces
 
 - `GET /livez` answers `200` while the process serves HTTP. Use it for liveness, so a database outage does not restart healthy processes.
