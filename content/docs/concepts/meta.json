@@ -4,6 +4,7 @@
     "workflows",
     "executions",
     "templates",
+    "secrets",
     "tenants"
   ]
 }

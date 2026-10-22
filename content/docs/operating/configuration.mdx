@@ -23,7 +23,7 @@ description: Every flag and environment variable of operion serve
 
 Traces are exported over OTLP/HTTP when `OTEL_EXPORTER_OTLP_ENDPOINT` or `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` is set.
 
-Workflows cannot read these variables, or any other variable of the server's environment.
+Workflows cannot read these variables. The only environment variables they read are the `OPERION_SECRET_<NAME>` [secrets](/docs/concepts/secrets).
 
 For example:
 
