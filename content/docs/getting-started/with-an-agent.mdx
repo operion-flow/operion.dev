@@ -1,0 +1,41 @@
+---
+title: Getting started with an agent
+description: A prompt that gets a coding agent to run Operion on your machine and prove it works
+---
+
+Copy this prompt into a coding agent that can run commands on your machine, such as Claude Code, Codex or Cursor. The agent reads these docs as markdown, starts Operion with PostgreSQL, publishes a workflow, runs it and checks the result.
+
+```text title="prompt"
+Get Operion running on this machine and prove it works end to end. Operion is a workflow engine: one binary, operion, on PostgreSQL, shipped as the container image ghcr.io/operion-flow/operion for linux/amd64 and linux/arm64.
+
+Read the docs as markdown before you start. Every page of https://operion.dev is markdown when you add .md to its URL or send the header Accept: text/markdown:
+- https://operion.dev/docs.md explains what Operion is.
+- https://operion.dev/docs/getting-started/quick-start.md has the steps to follow.
+- https://operion.dev/docs/operating/troubleshooting.md helps when something fails.
+
+Then:
+1. Check that Docker, or another runtime with docker compose such as Podman or OrbStack, and curl are installed, and that port 9091 is free. If something is missing, stop and tell me what to install.
+2. In a new folder named operion-quickstart, write compose.yaml and workflow.json exactly as the quick start shows, and start the stack in the background with docker compose up -d.
+3. Wait until curl -s -o /dev/null -w '%{http_code}' localhost:9091/readyz prints 200, for at most two minutes. If it does not, read docker compose logs operion and the troubleshooting page, fix the cause and try again.
+4. Create the workflow for the tenant acme, publish it and start it through its webhook, as the quick start shows. Take the workflow id and the execution id from the answers; never guess them.
+5. Read the execution until its status is no longer running. It must be completed, with node_results.greet.data.result equal to "hello Ana".
+
+Only create files inside operion-quickstart. The token dev-token is for this local setup only. Do not push, publish or deploy anything.
+
+When you finish, tell me every command you ran with its HTTP status, the final execution JSON, and how to stop and remove everything: docker compose down -v inside operion-quickstart.
+```
+
+The agent needs Docker or a compatible runtime and `curl`; the image runs on Intel and Apple Silicon alike. The steps it follows are the [quick start](/docs/getting-started/quick-start), so you can check its work against that page.
+
+## Docs as markdown
+
+Every page of these docs is available as markdown, for agents and any tool that reads it better than HTML:
+
+- add `.md` to the page's URL, as in `https://operion.dev/docs/concepts/workflows.md`;
+- or ask for `text/markdown` in the `Accept` header:
+
+```bash
+curl -H 'Accept: text/markdown' https://operion.dev/docs/concepts/workflows
+```
+
+The docs home is `https://operion.dev/docs.md`.
