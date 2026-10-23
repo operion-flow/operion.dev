@@ -52,7 +52,7 @@ Read the [Introduction](https://fumadocs.dev/docs/mdx) for further details.
 
 ## Deployment
 
-`npm run build` exports a static site to `out/` (`output: 'export'`); search uses an index built at the same time, so nothing runs on a server. Cloudflare Workers serves `out/` as static assets, as `wrangler.jsonc` declares, and serves `out/404.html` for unknown paths.
+`npm run build` exports a static site to `out/` (`output: 'export'`); search uses an index built at the same time. `scripts/markdown.mjs` then writes a markdown copy of every page next to its HTML (`out/docs/concepts/workflows.md`, `out/docs.md`, `out/index.md` for the home page, whose text lives in `app/(home)/home.json`). Cloudflare Workers serves `out/` as static assets, as `wrangler.jsonc` declares, through `worker.js`: a path ending in `.md`, or a request whose `Accept` prefers `text/markdown` over `text/html`, gets the markdown copy; everything else gets the static file, and unknown paths get `out/404.html`.
 
 The Cloudflare project is connected to this repository with Workers Builds: build command `npm run build`, deploy command `npx wrangler deploy`. A push to `main` deploys the site, and other branches get preview URLs.
 
